@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -25,7 +26,7 @@ SECRET_KEY = "django-insecure-(#37-0t(wdbvzf3^-#xiv6p2+2y8rr&ooexwx6r!-y=x7e(0pq
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ["*"]
 
 
 # Application definition
@@ -37,7 +38,26 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
+    "rest_framework_simplejwt",
 ]
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
+        "rest_framework.authentication.SessionAuthentication",
+    ],
+}
+
+SIMPLE_JWT = {
+    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
+    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
+    "ROTATE_REFRESH_TOKENS": False,
+    "BLACKLIST_AFTER_ROTATION": True,
+    "ALGORITHM": "HS256",
+    "SIGNING_KEY": "d1eb5eb13e445a7f33d4749045520073ffdcab14efd0b2b606c615539104e0cd9cb38c2c842a5aedb174875364f7afe5b31c2a7b9caf0ad39db16382524f44144527063325138006f08ad03bc928796b10737eceffc0dbd58d863709fda5a300501f75b87576688636684166f0b9026c0686bf390b69b067ecc0303bb54bdf9cb5d9c43cc31a7c0112c70cf62a616bf0f0c3260a87a701100080de1c856a9834d7c63631777666d0f5d4fb3745ffd0556230ac253edd6af470a53855603183960ed5dbe15fe9dc776e7b99840131c5781925c9cd1135190a16a7afcc44c8983cbddeefc2dcfae0c23c209be5063b9254e5360538925b8f24377904e8aad98b05",
+    "VERIFYING_KEY": None,
+    "AUTH_HEADER_TYPES": ("Bearer",),
+}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
