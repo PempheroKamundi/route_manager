@@ -3,7 +3,7 @@ from django.db import models
 
 
 class Profile(models.Model):
-    """Model to hold user profile details"""
+    """Model to hold user profile details."""
 
     user = models.OneToOneField(User, on_delete=models.CASCADE)
     bio = models.TextField(max_length=500, blank=True)
