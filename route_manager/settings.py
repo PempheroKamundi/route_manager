@@ -87,7 +87,8 @@ TEMPLATES = [
     },
 ]
 
-WSGI_APPLICATION = "route_manager__.wsgi.application"
+WSGI_APPLICATION = "route_manager.wsgi.application"
+ASGI_APPLICATION = "route_manager.asgi.application"
 
 
 # Database
