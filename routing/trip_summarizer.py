@@ -5,7 +5,9 @@ from .route_planner import RoutePlan
 
 
 class TripSummaryMixin:
-    """Mixin that provides trip summary functionality while using independent functions"""
+    """Mixin that provides trip summary functionality while using
+    independent functions.
+    """
 
     def calculate_trip_summary(
         self,
@@ -49,7 +51,9 @@ class TripSummaryMixin:
     @staticmethod
     def combine_geometries(geometry1: Any, geometry2: Any) -> Any:
         """
-        Combine two route geometries into a single geometry for visualization.
+        Combine two route geometries into a single geometry for.
+
+        visualization.
 
         Handles various geometry formats including:
         - GeoJSON objects

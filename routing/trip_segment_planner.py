@@ -55,7 +55,9 @@ class TripSegmentPlannerMixin:
         hos_rule: Type[HOSInterstateRule],
     ) -> RouteSegmentsData:
         """
-        Plan a route segment considering HOS regulations and breaks.
+        Plan a route segment considering HOS regulations and.
+
+        breaks.
 
         Args:
             start_time: When this segment starts
@@ -108,6 +110,7 @@ class TripSegmentPlannerMixin:
                 needs_rest = True
 
             if needs_rest:
+
                 # Add a 10-hour rest period
                 rest_end_time = current_time + datetime.timedelta(
                     hours=hos_rule.DAILY_REST_PERIOD_HOURS.value
@@ -131,6 +134,7 @@ class TripSegmentPlannerMixin:
                 continue
 
             if cant_drive_but_can_work:
+                print("needs rest is true")
                 # Calculate remaining time in 14-hour duty window
                 elapsed_window_hours = (
                     current_time - driver_state.current_on_duty_window_start

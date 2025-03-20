@@ -3,21 +3,21 @@ from typing import Dict, Type
 
 
 class BaseHOSRule(Enum):
-    """Base class for Hours of Service Rules"""
+    """Base class for Hours of Service Rules."""
 
     def __init__(self, value):
         self._value_ = value
 
     @classmethod
     def __init_subclass__(cls, **kwargs):
-        """Validate that subclass implements all required rules"""
+        """Validate that subclass implements all required rules."""
         super().__init_subclass__(**kwargs)
 
         required_rules = {
             "MAX_DRIVING_HOURS",
             "MAX_DUTY_HOURS",
-            "REQUIRED_REST_PERIOD",
-            "REQUIRED_BREAK_PERIOD",
+            "DAILY_REST_PERIOD_HOURS",
+            "SHORT_BREAK_PERIOD_MINUTES",
             "MAX_CYCLE_HOURS",
             "AVERAGE_TRUCK_SPEED",
             "REFUEL_DISTANCE",
@@ -33,7 +33,7 @@ class BaseHOSRule(Enum):
 
 
 class HOSInterstateRule(BaseHOSRule):
-    """Interstate hours of service Rule"""
+    """Interstate hours of service Rule."""
 
     MAX_DRIVING_HOURS = 11.0  # Maximum driving hours per day
     MAX_DUTY_HOURS = 14.0  # Maximum on-duty hours per day
