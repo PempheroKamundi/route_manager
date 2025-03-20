@@ -2,6 +2,7 @@ import datetime
 from typing import Type
 
 from hos_rules.rules import HOSInterstateRule
+from repository.mixins import RouteInformation
 from routing.driver_state import DriverState
 
 from .trip_segment_planner import (
@@ -26,6 +27,7 @@ class TripActivityPlannerMixin:
         current_time: datetime.datetime,
         driver_state: DriverState,
         hos_rule: Type[HOSInterstateRule],
+        data: RouteInformation,
     ) -> RouteSegmentsData:
         segments = []
         processing_time = current_time
@@ -105,5 +107,8 @@ class TripActivityPlannerMixin:
         # Final check for day changes at end of activity
         driver_state.check_day_change(drop_off_end_time)
         return RouteSegmentsData(
-            segments=segments, end_time=current_time, driver_state=driver_state
+            segments=segments,
+            end_time=current_time,
+            driver_state=driver_state,
+            geometry=data.geometry,
         )

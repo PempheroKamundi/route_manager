@@ -1,7 +1,19 @@
 import datetime
+import pprint
+from dataclasses import dataclass
 from typing import Any, List
 
-from .route_planner import RoutePlan
+from routing.trip_segment_planner import RouteSegment
+
+
+@dataclass
+class RoutePlan:
+    segments: List[RouteSegment]
+    total_distance_miles: float
+    total_duration_hours: float
+    start_time: datetime.datetime
+    end_time: datetime.datetime
+    route_geometry: Any
 
 
 class TripSummaryMixin:
@@ -21,6 +33,10 @@ class TripSummaryMixin:
         # Calculate total distance and duration from all segments
         total_distance = 0
         total_duration = 0
+
+        with open("debug_segments.pkl", "w") as f:
+            pp = pprint.PrettyPrinter(stream=f)
+            pp.pprint(segments)
 
         for segment in segments:
             total_distance += segment.distance_miles
@@ -50,6 +66,7 @@ class TripSummaryMixin:
 
     @staticmethod
     def combine_geometries(geometry1: Any, geometry2: Any) -> Any:
+        print(geometry1, geometry2)
         """
         Combine two route geometries into a single geometry for.
 

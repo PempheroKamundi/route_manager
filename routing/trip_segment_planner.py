@@ -75,12 +75,12 @@ class TripSegmentPlannerMixin:
         trip_hours = total_trip_hours
         trip_distance_miles = total_trip_distance_miles
 
-        # If no on-duty window has started yet, start one now
-        if driver_state.current_on_duty_window_start is None and trip_hours > 0:
-            driver_state.current_on_duty_window_start = current_time
-
         # Continue until the entire trip segment is planned
         while trip_hours > 0:
+            # If no on-duty window has started yet, start one now
+            if driver_state.current_on_duty_window_start is None and trip_hours > 0:
+                driver_state.current_on_duty_window_start = current_time
+
             driver_state.check_day_change(current_time)
 
             # Check if driver needs a 10-hour rest period (reached 14-hour on-duty window or 11-hour driving limit)
@@ -134,8 +134,8 @@ class TripSegmentPlannerMixin:
                 continue
 
             if cant_drive_but_can_work:
-                print("needs rest is true")
                 # Calculate remaining time in 14-hour duty window
+
                 elapsed_window_hours = (
                     current_time - driver_state.current_on_duty_window_start
                 ).total_seconds() / 3600
@@ -158,6 +158,8 @@ class TripSegmentPlannerMixin:
                         status=DutyStatus.ON_DUTY_NOT_DRIVING,
                     )
                 )
+
+                driver_state.add_on_duty_hours(remaining_window_hours)
                 current_time = work_end_time
                 continue
 

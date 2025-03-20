@@ -2,11 +2,11 @@ import asyncio
 import datetime
 from abc import ABC, abstractmethod
 from collections import namedtuple
-from dataclasses import dataclass
 from typing import Any, List, Type
 
 from hos_rules.rules import HOSInterstateRule, HOSRulesFactory, RuleType
 from repository.mixins import AsyncRouteRepositoryMixin, Location, RouteInformation
+from repository.route_repository import OSRMRouteRepository
 
 from .activity_planner import TripActivityPlannerMixin
 from .trip_segment_planner import (
@@ -16,21 +16,11 @@ from .trip_segment_planner import (
     SegmentType,
     TripSegmentPlannerMixin,
 )
-from .trip_summarizer import TripSummaryMixin
+from .trip_summarizer import RoutePlan, TripSummaryMixin
 
 RoutesInBetween = namedtuple(
     "RoutesInBetween", ["to_pickup_route", "to_drop_off_route"]
 )
-
-
-@dataclass
-class RoutePlan:
-    segments: List[RouteSegment]
-    total_distance_miles: float
-    total_duration_hours: float
-    start_time: datetime.datetime
-    end_time: datetime.datetime
-    route_geometry: Any
 
 
 class AbstractRoutePlanner(ABC):
@@ -78,7 +68,9 @@ class AbstractRoutePlanner(ABC):
         driver_state = pickup_info.driver_state
 
         # Step 2: Handle pickup activity
-        pickup_result = self._handle_pickup(current_time, driver_state)
+        pickup_result = self._handle_pickup(
+            current_time, driver_state, route_in_between_data.to_pickup_route
+        )
         segments.append(pickup_result.segments)
         current_time = pickup_result.end_time
         driver_state = pickup_result.driver_state
@@ -92,7 +84,9 @@ class AbstractRoutePlanner(ABC):
         driver_state = drop_off_info.driver_state
 
         # Step 4: Handle drop_off activity
-        drop_off_result = self._handle_drop_off(current_time, driver_state)
+        drop_off_result = self._handle_drop_off(
+            current_time, driver_state, route_in_between_data.to_drop_off_route
+        )
         segments.append(drop_off_result.segments)
         end_time = drop_off_result.end_time
 
@@ -137,7 +131,10 @@ class AbstractRoutePlanner(ABC):
 
     @abstractmethod
     def _handle_pickup(
-        self, current_time: datetime.datetime, driver_state: DriverState
+        self,
+        current_time: datetime.datetime,
+        driver_state: DriverState,
+        pickup_route: RouteInformation,
     ) -> RouteSegmentsData:
         """
         Handle pickup activity at the pickup location.
@@ -180,7 +177,10 @@ class AbstractRoutePlanner(ABC):
 
     @abstractmethod
     def _handle_drop_off(
-        self, current_time: datetime.datetime, driver_state: DriverState
+        self,
+        current_time: datetime.datetime,
+        driver_state: DriverState,
+        drop_off_info: RouteInformation,
     ) -> RouteSegmentsData:
         """
         Handle drop-off activity at the drop-off location.
@@ -253,7 +253,7 @@ class StandardRoutePlanner(
         drop_off_location: Location,
         rule_type: RuleType,
         current_cycle_used: float,
-        repository: Type[AsyncRouteRepositoryMixin],
+        repository: AsyncRouteRepositoryMixin,
     ):
         self._current_location = current_location
         self._pickup_location = pickup_location
@@ -261,6 +261,23 @@ class StandardRoutePlanner(
         self._hos_rule = self.__init_hos_rule(rule_type)
         self._current_cycle_used = current_cycle_used
         self._repository = repository
+
+    @classmethod
+    def create_planner(
+        cls,
+        current_location: Location,
+        pickup_location: Location,
+        drop_off_location: Location,
+        current_cycle_used: float,
+    ) -> "StandardRoutePlanner":
+        return cls(
+            current_location=current_location,
+            pickup_location=pickup_location,
+            drop_off_location=drop_off_location,
+            rule_type=RuleType.INTERSTATE,
+            current_cycle_used=current_cycle_used,
+            repository=OSRMRouteRepository(),
+        )
 
     @staticmethod
     def __init_hos_rule(rule_type: RuleType) -> Type[HOSInterstateRule]:
@@ -295,13 +312,17 @@ class StandardRoutePlanner(
         )
 
     def _handle_pickup(
-        self, current_time: datetime.datetime, driver_state: DriverState
+        self,
+        current_time: datetime.datetime,
+        driver_state: DriverState,
+        pickup_info: RouteInformation,
     ) -> RouteSegmentsData:
 
         return self.handle_pickup(
             current_time=current_time,
             driver_state=driver_state,
             hos_rule=self._hos_rule,
+            data=pickup_info,
         )
 
     def _plan_to_drop_off(
@@ -323,12 +344,16 @@ class StandardRoutePlanner(
         )
 
     def _handle_drop_off(
-        self, current_time: datetime.datetime, driver_state: DriverState
+        self,
+        current_time: datetime.datetime,
+        driver_state: DriverState,
+        drop_off_info: RouteInformation,
     ) -> RouteSegmentsData:
         return self.handle_drop_off(
             current_time=current_time,
             driver_state=driver_state,
             hos_rule=self._hos_rule,
+            data=drop_off_info,
         )
 
     def _calculate_trip_summary(
