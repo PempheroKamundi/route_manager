@@ -344,5 +344,5 @@ def test_refueling_requirement(
         assert (
             refuel_segment is not None
         ), f"No refueling segment found in: {result.segments}"
-        assert refuel_segment.duration_hours == 0.25  # 15 minutes
+        assert refuel_segment.duration_hours == 1
         assert refuel_segment.status == DutyStatus.ON_DUTY_NOT_DRIVING

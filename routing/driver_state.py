@@ -35,7 +35,6 @@ class DriverState:
     current_on_duty_window_start: Optional[datetime.datetime] = None
     accumulative_driving_hours: float = 0.0
     miles_since_refueling: float = 0.0
-    has_taken_30min_break: bool = False
     current_off_duty_hours: float = 0.0
     last_day_check: Optional[datetime.date] = None
 
@@ -74,26 +73,18 @@ class DriverState:
         8 consecutive hours of driving.
         """
         if self.accumulative_driving_hours >= 8.0:
-            self.has_taken_30min_break = True
             self.current_off_duty_hours += 0.5  # 30 minutes
-
-        # self.accumulative_driving_hours = (
-        #  0.0  # Reset the counter to start tracking next 8hr period
-
-    # )
+            self.accumulative_driving_hours = 0.0
 
     def start_new_day(self) -> None:
         """
-        Start a new day by shifting the 8-day window and resetting daily counters.
+        Start a new day by shifting the 8-day window for the 70-hour rule only.
 
-        This maintains the rolling 8-day window for the 70-hour rule by removing
-        the oldest day and adding a new day with zero hours.
+        This maintains the rolling 8-day window by removing the oldest day
+        and adding a new day with zero hours.
         """
         self.duty_hours_last_8_days.pop()
         self.duty_hours_last_8_days.insert(0, 0.0)
-        self.current_day_driving_hours = 0.0
-        self.current_day_on_duty_hours = 0.0
-        self.accumulative_driving_hours = 0.0
 
     def take_10_hour_break(self) -> None:
         """
@@ -106,9 +97,6 @@ class DriverState:
         self.current_day_driving_hours = 0.0
         self.current_day_on_duty_hours = 0.0
         self.accumulative_driving_hours = 0.0
-        self.has_taken_30min_break = (
-            True  # A fresh 10-hour break satisfies the 30-min break requirement
-        )
         self.current_off_duty_hours = 0.0
 
     def check_day_change(self, current_time: datetime.datetime) -> None:
@@ -193,7 +181,7 @@ class DriverState:
         Returns:
             True if driver has driven 8+ hours without a break, False otherwise
         """
-        return self.accumulative_driving_hours >= 8.0 and not self.has_taken_30min_break
+        return self.accumulative_driving_hours >= 8.0
 
     @property
     def needs_refueling(self) -> bool:
@@ -204,3 +192,15 @@ class DriverState:
             True if vehicle has gone 1000+ miles since last refueling, False otherwise
         """
         return self.miles_since_refueling >= 1000.0
+
+    def __repr__(self):
+        return (
+            f"{type(self).__name__}(duty_hours_8days={self.duty_hours_last_8_days}, "
+            f"driving_hours={self.current_day_driving_hours:.2f}, "
+            f"on_duty_hours={self.current_day_on_duty_hours:.2f}, "
+            f"window_start={self.current_on_duty_window_start}, "
+            f"accum_driving={self.accumulative_driving_hours:.2f}, "
+            f"miles_since_fuel={self.miles_since_refueling:.2f},"
+            f"off_duty_hours={self.current_off_duty_hours:.2f}, "
+            f"last_day_check={self.last_day_check})"
+        )

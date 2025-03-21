@@ -40,7 +40,6 @@ class DriverStateFactory(factory.Factory):
     current_on_duty_window_start = None
     accumulative_driving_hours = 0.0
     miles_since_refueling = 0.0
-    has_taken_30min_break = False
     current_off_duty_hours = 0.0
     last_day_check = None
 
@@ -78,7 +77,6 @@ class DriverStateFactory(factory.Factory):
             current_day_driving_hours=driving_hours,
             current_day_on_duty_hours=driving_hours,
             accumulative_driving_hours=driving_hours,
-            has_taken_30min_break=False,
         )
 
     @classmethod
