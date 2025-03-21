@@ -323,6 +323,7 @@ class StandardRoutePlanner(
             driver_state=driver_state,
             hos_rule=self._hos_rule,
             data=pickup_info,
+            segment_type=SegmentType.PICKUP,
         )
 
     def _plan_to_drop_off(
@@ -354,6 +355,7 @@ class StandardRoutePlanner(
             driver_state=driver_state,
             hos_rule=self._hos_rule,
             data=drop_off_info,
+            segment_type=SegmentType.DROP_OFF,
         )
 
     def _calculate_trip_summary(

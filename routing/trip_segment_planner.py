@@ -36,7 +36,6 @@ class SegmentType(Enum):
     )
     MANDATORY_REST_PERIOD = "mandatory_rest_period"  # Required 10-hr daily rest
     REFUELING = "refueling"
-    MAINTENANCE = "maintenance"  # cant drive, but can work period
 
 
 @dataclass
@@ -48,6 +47,24 @@ class RouteSegment:
     distance_miles: float
     location: str
     status: DutyStatus
+
+    def to_dict(self):
+        """
+        Serializes the RouteSegment object to a dictionary.
+
+        Returns:
+            dict: Dictionary representation of the RouteSegment with serialized datetime objects
+                  and enum values converted to strings.
+        """
+        return {
+            "type": self.type.value,
+            "start_time": self.start_time.isoformat(),
+            "end_time": self.end_time.isoformat(),
+            "duration_hours": self.duration_hours,
+            "distance_miles": self.distance_miles,
+            "location": self.location,
+            "status": self.status.value,
+        }
 
     def __repr__(self):
         return (
@@ -350,6 +367,10 @@ class TripSegmentPlannerMixin:
         """Create a driving segment if hours are available"""
         # Calculate how many hours can be driven in this stretch
         available_driving_hours = driver_state.available_driving_hours
+        hours_until_break_needed = 8.0 - driver_state.accumulative_driving_hours
+        if hours_until_break_needed < available_driving_hours:
+            available_driving_hours = max(0, hours_until_break_needed)
+
         max_driving_hours = min(available_driving_hours, remaining_trip_hours)
 
         logger.debug(
