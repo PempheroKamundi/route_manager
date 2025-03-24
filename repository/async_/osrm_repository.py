@@ -33,10 +33,10 @@ class BaseOSRMError(Exception):
 class InvalidOSRMResponse(BaseOSRMError):
     """Raised when OSRM returns a response that's not valid JSON"""
 
-    def __init__(self, response):
-        self.response = response
-        log.error(f"Invalid OSRM response received: {self.response}")
-        super().__init__(f"Invalid OSRM response: {self.response}")
+    def __init__(self, error):
+
+        log.error(f"Invalid OSRM response received: {error}")
+        super().__init__(f"Invalid OSRM response: {error}")
 
 
 class NoOSRMRouteFound(BaseOSRMError):
@@ -129,34 +129,32 @@ class AsyncOSRMRouteRepository(AsyncRouteRepositoryMixin):
             NoOSRMRouteFound: If no routes are found between two coordinates.
         """
         log.info(
-            f"Getting route information from {origin.latitude},{origin.longitude} to {destination.latitude},{destination.longitude}"
+            f"Getting route information from {origin.latitude},{origin.longitude} to"
+            f" {destination.latitude},{destination.longitude}"
         )
 
-        _origin = f"{origin.latitude},{origin.longitude}"
-        _destination = f"{destination.latitude},{destination.longitude}"
+        _origin = f"{origin.longitude},{origin.latitude}"
+        _destination = f"{destination.longitude},{destination.latitude}"
         coordinates = f"{_origin};{_destination}"
         url = f"{OSRM_URL}/{coordinates}?overview=full&geometries=polyline"
 
         log.debug(f"Making request to OSRM URL: {url}")
 
-        response = await self._client.make_request("GET", url)
-        log.debug(f"Received response from OSRM with status: {response.status}")
-
         try:
-            data = await response.json()
-            log.debug("Successfully parsed JSON response from OSRM")
+            response = await self._client.make_request("GET", url)
+            log.debug(f"Received response from OSRM with status: {response}")
         except json.decoder.JSONDecodeError as e:
             log.error(f"Failed to decode JSON response from OSRM: {e}")
-            raise InvalidOSRMResponse(response) from e
+            raise InvalidOSRMResponse(e) from e
 
-        if data.get("code") != "Ok" or not data.get("routes"):
+        if response.get("code") != "Ok" or not response.get("routes"):
             log.warning(
-                f"OSRM returned no routes: {data.get('code', 'Unknown')} - {data.get('message', 'No message')}"
+                f"OSRM returned no routes: {response.get('code', 'Unknown')} - {response.get('message', 'No message')}"
             )
             raise NoOSRMRouteFound(_origin, _destination)
 
         log.info("Successfully retrieved route information from OSRM")
-        return _convert_osrm_to_route_information(data)
+        return _convert_osrm_to_route_information(response)
 
 
 async def get_route_information(

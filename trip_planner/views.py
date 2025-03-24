@@ -1,4 +1,5 @@
 import asyncio
+import datetime
 
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
@@ -7,8 +8,10 @@ from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
 from rest_framework.views import APIView
 
-from repository.mixins import Location
-from routing.route_planner import StandardRoutePlanner
+from repository.async_.client import NetworkTimeOutError
+from repository.async_.mixins import Location
+from repository.async_.osrm_repository import InvalidOSRMResponse, NoOSRMRouteFound
+from routing.route_planner.standard_route_planner import USAStandardRoutePlanner
 
 from .serializers import TripSerializer
 
@@ -41,8 +44,9 @@ class TripView(APIView):
             )
 
             current_cycle_used = serializer.validated_data["current_cycle_used"]
+            planned_time = datetime.datetime.now(datetime.timezone.utc)
 
-            route_planner = StandardRoutePlanner.create_planner(
+            route_planner = USAStandardRoutePlanner.create_route(
                 current_location=current_location,
                 pickup_location=pickup_location,
                 drop_off_location=drop_off_location,
@@ -57,9 +61,33 @@ class TripView(APIView):
                 asyncio.set_event_loop(loop)
 
             # Run the async method in the event loop
-            results = loop.run_until_complete(route_planner.plan_route_trip())
-            print(results)
+            try:
+                route_plan = loop.run_until_complete(
+                    route_planner.plan_route_trip(planned_time)
+                )
+                print(route_plan)
+                return Response(route_plan.to_dict(), status=status.HTTP_200_OK)
 
-            return Response(serializer.data, status=status.HTTP_200_OK)
+            except InvalidOSRMResponse:
+                return Response(
+                    {
+                        "error": "Unable to process routing request due to invalid response from routing service."
+                    },
+                    status=status.HTTP_502_BAD_GATEWAY,
+                )
+
+            except NoOSRMRouteFound:
+                return Response(
+                    {
+                        "error": "No viable route could be found for the requested journey."
+                    },
+                    status=status.HTTP_404_NOT_FOUND,
+                )
+
+            except NetworkTimeOutError:
+                return Response(
+                    {"error": "Routing service timed out. Please try again later."},
+                    status=status.HTTP_504_GATEWAY_TIMEOUT,
+                )
 
         return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
