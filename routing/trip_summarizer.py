@@ -48,7 +48,10 @@ class RoutePlan:
             "total_duration_hours": float(self.total_duration_hours),
             "start_time": self.start_time.isoformat(),
             "end_time": self.end_time.isoformat(),
-            "route_geometry": self.route_geometry.model_dump_json(),
+            "route_geometry": {
+                "type": "LineString",
+                "coordinates": self.route_geometry.coordinates,
+            },
             "driving_time": self.driving_time,
             "resting_time": self.resting_time,
         }
