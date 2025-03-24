@@ -14,6 +14,12 @@ from typing import List, Optional
 logger = logging.getLogger(__name__)
 
 
+#####################################################################
+# TODO : need to make this class more generic
+# instead of it having concrete implementations like add 30 min break
+# because if the requirement is now 40 min, it will create problems all
+# through out the code base
+####################################################################
 @dataclass
 class DriverState:
     """Tracks and manages the state of a commercial driver according to Hours

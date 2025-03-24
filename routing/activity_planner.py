@@ -1,20 +1,27 @@
+"""
+routing.activity_planner.usa_trip_activity_planner
+~~~~~~~~~~~~~
+
+Mixin class that provides specialized handling for non-driving activities (pickup and delivery).
+"""
+
 import datetime
 import logging
 from typing import Type
 
 from hos_rules.rules import HOSInterstateRule
-from repository.mixins import RouteInformation
-from routing.driver_state import DriverState
-
-from .trip_segment_planner import (
+from repository.async_.mixins import RouteInformation
+from routing.segment_planner.base_segment_planner import (
     DutyStatus,
     RouteSegment,
     RouteSegmentsData,
     SegmentType,
 )
 
+from .driver_state import DriverState
 
-class TripActivityPlannerMixin:
+
+class USATripActivityPlannerMixin:
 
     def handle_pickup(self, *args, **kwargs) -> RouteSegmentsData:
         logging.info("Starting pickup handling")

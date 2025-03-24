@@ -5,7 +5,8 @@ from typing import Any, List
 
 import pandas as pd
 
-from routing.trip_segment_planner import RouteSegment
+from repository.async_.mixins import RouteGeometry
+from routing.segment_planner.base_segment_planner import RouteSegment
 
 logger = logging.getLogger(__name__)
 
@@ -17,15 +18,48 @@ class RoutePlan:
     total_duration_hours: float
     start_time: datetime.datetime
     end_time: datetime.datetime
-    route_geometry: Any
+    route_geometry: RouteGeometry
+    driving_time: datetime.datetime
+    resting_time: datetime.datetime
+
+    def to_dict(self):
+        """
+        Serializes the RoutePlan object to a dictionary.
+
+        Returns:
+            dict: Dictionary representation of the RoutePlan with all nested objects
+                 properly serialized for JSON conversion. Nested segment lists are flattened
+                 while maintaining chronological order.
+        """
+        # Flatten segments while preserving order
+        serialized_segments = []
+        for item in self.segments:
+            if isinstance(item, list):
+                # Flatten nested list of segments
+                for segment in item:
+                    serialized_segments.append(segment.to_dict())
+            else:
+                # Handle individual segment
+                serialized_segments.append(item.to_dict())
+
+        return {
+            "segments": serialized_segments,
+            "total_distance_miles": float(self.total_distance_miles),
+            "total_duration_hours": float(self.total_duration_hours),
+            "start_time": self.start_time.isoformat(),
+            "end_time": self.end_time.isoformat(),
+            "route_geometry": self.route_geometry.model_dump_json(),
+            "driving_time": self.driving_time,
+            "resting_time": self.resting_time,
+        }
 
 
 class TripSummaryMixin:
-    """Mixin that provides trip summary functionality using pandas for efficient data processing."""
+    """Mixin that provides trip summary using pandas for efficient data processing."""
 
     def calculate_trip_summary(
         self,
-        segments: List[Any],  # RouteSegment
+        segments: List[RouteSegment],
         start_time: datetime.datetime,
         end_time: datetime.datetime,
         to_pickup_geometry: Any,
@@ -53,8 +87,8 @@ class TripSummaryMixin:
 
         # Additional analytics if needed
         # Can be useful for other metrics
-        # driving_time = df[df["status"].str.contains("Driving")]["duration_hours"].sum()
-        # rest_time = df[df["status"] == "Off Duty"]["duration_hours"].sum()
+        driving_time = df[df["status"].str.contains("Driving")]["duration_hours"].sum()
+        rest_time = df[df["status"] == "Off Duty"]["duration_hours"].sum()
 
         # Combine route geometries for full trip visualization
         combined_geometry = self.combine_geometries(
@@ -68,103 +102,33 @@ class TripSummaryMixin:
             start_time=start_time,
             end_time=end_time,
             route_geometry=combined_geometry,
+            driving_time=driving_time,
+            resting_time=rest_time,
         )
 
     @staticmethod
-    def combine_geometries(geometry1: Any, geometry2: Any) -> Any:
+    def combine_geometries(
+        geometry1: RouteGeometry, geometry2: RouteGeometry
+    ) -> RouteGeometry:
         """
-        Combine two route geometries into a single geometry for
-        visualization.
-
-        Handles various geometry formats including:
-        - GeoJSON objects
-        - Coordinate arrays
-        - String representations
-        - Empty/null geometries
-        - RouteGeometry objects
+        Combine two route geometries into a single RouteGeometry object.
 
         Args:
-            geometry1: First geometry (e.g., route to pickup)
-            geometry2: Second geometry (e.g., route to drop-off)
+            geometry1 (RouteGeometry): First geometry (e.g., route to pickup)
+            geometry2 (RouteGeometry): Second geometry (e.g., route to drop-off)
 
         Returns:
-            Combined geometry suitable for visualization
+            RouteGeometry: Combined geometry for visualization
         """
-        # Handle empty geometries
-        if not geometry1:
-            return geometry2
-        if not geometry2:
-            return geometry1
 
-        # Handle different geometry types
+        # Create a new RouteGeometry with merged coordinates
+        coords1 = geometry1.coordinates
+        coords2 = geometry2.coordinates
 
-        # 1. If the geometries are lists/arrays of coordinates
-        if isinstance(geometry1, list) and isinstance(geometry2, list):
-            combined = list(geometry1)
+        # Skip duplicate connecting point if present
+        if coords1 and coords2 and coords1[-1] == coords2[0]:
+            merged_coords = coords1 + coords2[1:]
+        else:
+            merged_coords = coords1 + coords2
 
-            # Skip the first point of geometry2 if it's identical to the last point of geometry1
-            # (This avoids duplicated points at the connection)
-            if geometry2 and combined and geometry2[0] == combined[-1]:
-                combined.extend(geometry2[1:])
-            else:
-                combined.extend(geometry2)
-
-            return combined
-
-        # 2. If the geometries are strings
-        if isinstance(geometry1, str) and isinstance(geometry2, str):
-            # For empty strings
-            if not geometry1.strip():
-                return geometry2
-            if not geometry2.strip():
-                return geometry1
-
-            return geometry1 + geometry2
-
-        # 3. If the geometries are dictionaries (like GeoJSON)
-        if isinstance(geometry1, dict) and isinstance(geometry2, dict):
-            # If they have the same type, try to merge their coordinates/features
-            if geometry1.get("type") == geometry2.get("type"):
-                # For LineString or similar types with coordinates
-                if "coordinates" in geometry1 and "coordinates" in geometry2:
-                    coords1 = geometry1["coordinates"]
-                    coords2 = geometry2["coordinates"]
-
-                    # Skip duplicate connecting point if present
-                    if coords1 and coords2 and coords1[-1] == coords2[0]:
-                        merged_coords = coords1 + coords2[1:]
-                    else:
-                        merged_coords = coords1 + coords2
-
-                    return {"type": geometry1["type"], "coordinates": merged_coords}
-
-                # For FeatureCollection with features array
-                if "features" in geometry1 and "features" in geometry2:
-                    return {
-                        "type": "FeatureCollection",
-                        "features": geometry1["features"] + geometry2["features"],
-                    }
-
-        # 4. Special case for RouteGeometry objects (as shown in provided data)
-        if (
-            hasattr(geometry1, "type")
-            and hasattr(geometry1, "coordinates")
-            and hasattr(geometry2, "type")
-            and hasattr(geometry2, "coordinates")
-        ):
-            # Create a new dictionary with merged coordinates
-            coords1 = geometry1.coordinates
-            coords2 = geometry2.coordinates
-
-            # Skip duplicate connecting point if present
-            merged_coords = []
-            if coords1 and coords2 and coords1[-1] == coords2[0]:
-                merged_coords = coords1 + coords2[1:]
-            else:
-                merged_coords = coords1 + coords2
-
-            # Return a dictionary representation since we may not have the RouteGeometry constructor
-            return {"type": geometry1.type, "coordinates": merged_coords}
-
-        # 5. Default: create a composite object for unknown or mixed geometry types
-        return {"type": "CompositeGeometry", "geometries": [geometry1, geometry2]}
+        return RouteGeometry(type=geometry1.type, coordinates=merged_coords)

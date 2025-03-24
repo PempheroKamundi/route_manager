@@ -3,7 +3,7 @@ import datetime
 import pytest
 from freezegun import freeze_time
 
-from routing.tests.factories import DriverStateFactory
+from routing.tests.factory import DriverStateFactory
 
 
 @pytest.fixture

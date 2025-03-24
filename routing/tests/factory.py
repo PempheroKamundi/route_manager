@@ -7,9 +7,6 @@ from ..driver_state import DriverState
 from ..segment_planner.base_segment_planner import DutyStatus, RouteSegment, SegmentType
 
 
-
-
-
 class RouteSegmentFactory(factory.Factory):
     class Meta:
         model = RouteSegment
