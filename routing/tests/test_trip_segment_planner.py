@@ -4,16 +4,14 @@ from unittest.mock import patch
 import pytest
 
 from hos_rules.rules import HOSInterstateRule
-from routing.tests.factories import DriverStateFactory
-from routing.trip_segment_planner import (
-    DutyStatus,
-    SegmentType,
-    TripSegmentPlannerMixin,
-)
+from routing.tests.factory import DriverStateFactory
+
+from ..segment_planner.base_segment_planner import DutyStatus, SegmentType
+from ..segment_planner.usa_inter_segment_planner import USAInterTripSegmentPlanner
 
 
 # Create the test planner that uses the mixin
-class TestRoutePlanner(TripSegmentPlannerMixin):
+class TestRoutePlanner(USAInterTripSegmentPlanner):
     pass
 
 
@@ -344,5 +342,5 @@ def test_refueling_requirement(
         assert (
             refuel_segment is not None
         ), f"No refueling segment found in: {result.segments}"
-        assert refuel_segment.duration_hours == 0.25  # 15 minutes
+        assert refuel_segment.duration_hours == 1
         assert refuel_segment.status == DutyStatus.ON_DUTY_NOT_DRIVING

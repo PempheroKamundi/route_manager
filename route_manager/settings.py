@@ -90,6 +90,48 @@ TEMPLATES = [
 WSGI_APPLICATION = "route_manager.wsgi.application"
 ASGI_APPLICATION = "route_manager.asgi.application"
 
+LOGGING = {
+    "version": 1,
+    "disable_existing_loggers": False,
+    "formatters": {
+        "verbose": {
+            "format": "{levelname} {asctime} {module} {process:d} {thread:d} {message}",
+            "style": "{",
+        },
+        "detailed": {
+            "format": (
+                "%(asctime)s [%(levelname)s] %(name)s (%(filename)s:%(lineno)d) %(message)s"
+            )
+        },
+        "simple": {"format": "%(asctime)s::%(name)s::%(levelname)s::%(message)s"},
+    },
+    "handlers": {
+        "console": {
+            "level": "DEBUG" if DEBUG else "INFO",
+            "class": "logging.StreamHandler",
+            "formatter": "detailed",
+        },
+        "file": {
+            "level": "DEBUG" if DEBUG else "INFO",
+            "class": "logging.FileHandler",
+            "filename": "virtu_educate.log",
+            "formatter": "verbose",
+        },
+    },
+    "loggers": {
+        "": {
+            "handlers": ["file", "console"],
+            "level": "DEBUG" if DEBUG else "INFO",
+            "propagate": True,
+        },
+        "django.request": {
+            "handlers": ["console"],  # or ["file", "console"] if you want both
+            "level": "DEBUG" if DEBUG else "INFO",
+            "propagate": True,
+        },
+    },
+}
+
 
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases

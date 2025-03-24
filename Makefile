@@ -3,6 +3,8 @@ PYTHON = python
 PYTEST = $(PYTHON) -m pytest
 MYPY = mypy
 PRECOMMIT = pre-commit
+UVICORN = uvicorn
+TEST_DIR = tests  # Define the test directory
 
 # Default target
 .PHONY: all
@@ -22,6 +24,7 @@ help:
 	@echo "  type-check          - Run mypy for type checking"
 	@echo "  pre-commit          - Run pre-commit hooks on all files"
 	@echo "  clean               - Clean up generated files"
+	@echo "  async-server        - Start Django async server"
 
 # Run tests with default options
 .PHONY: test
@@ -73,3 +76,8 @@ pre-commit:
 clean:
 	find . -name "__pycache__" -exec rm -rf {} +
 	find . -name "*.pyc" -exec rm -f {} +
+
+# Start Django async server with Uvicorn
+.PHONY: async-server
+async-server:
+	$(UVICORN) route_manager.asgi:application

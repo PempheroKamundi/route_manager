@@ -4,7 +4,7 @@ import factory
 from factory import fuzzy
 
 from ..driver_state import DriverState
-from ..trip_segment_planner import DutyStatus, RouteSegment, SegmentType
+from ..segment_planner.base_segment_planner import DutyStatus, RouteSegment, SegmentType
 
 
 class RouteSegmentFactory(factory.Factory):
@@ -40,7 +40,6 @@ class DriverStateFactory(factory.Factory):
     current_on_duty_window_start = None
     accumulative_driving_hours = 0.0
     miles_since_refueling = 0.0
-    has_taken_30min_break = False
     current_off_duty_hours = 0.0
     last_day_check = None
 
@@ -78,7 +77,6 @@ class DriverStateFactory(factory.Factory):
             current_day_driving_hours=driving_hours,
             current_day_on_duty_hours=driving_hours,
             accumulative_driving_hours=driving_hours,
-            has_taken_30min_break=False,
         )
 
     @classmethod
