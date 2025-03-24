@@ -6,6 +6,7 @@ from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
 from rest_framework.parsers import JSONParser
 from rest_framework.response import Response
+from rest_framework.throttling import AnonRateThrottle, UserRateThrottle
 from rest_framework.views import APIView
 
 from repository.async_.client import NetworkTimeOutError
@@ -13,15 +14,33 @@ from repository.async_.mixins import Location
 from repository.async_.osrm_repository import InvalidOSRMResponse, NoOSRMRouteFound
 from routing.route_planner.standard_route_planner import USAStandardRoutePlanner
 
+from .normalizer import FrontEndNormalizer
 from .serializers import TripSerializer
+
+
+class TripUserRateThrottle(UserRateThrottle):
+    """
+    Rate throttle for authenticated users
+    """
+
+    rate = "40/minute"  # 10 requests per minute for authenticated users
+
+
+class TripAnonRateThrottle(AnonRateThrottle):
+    """
+    Rate throttle for anonymous users
+    """
+
+    rate = "20/minute"  # 20 requests per minute for anonymous users
 
 
 @method_decorator(csrf_exempt, name="dispatch")
 class TripView(APIView):
     parser_classes = [JSONParser]
+    throttle_classes = [TripUserRateThrottle, TripAnonRateThrottle]
 
     """
-    A simple view that processes trip data asynchronously
+    A simple view that processes trip data asynchronously with rate limiting
     """
 
     def post(self, request):
@@ -65,8 +84,8 @@ class TripView(APIView):
                 route_plan = loop.run_until_complete(
                     route_planner.plan_route_trip(planned_time)
                 )
-                print(route_plan)
-                return Response(route_plan.to_dict(), status=status.HTTP_200_OK)
+                normalized_data = FrontEndNormalizer(route_plan.to_dict()).normalize()
+                return Response(normalized_data, status=status.HTTP_200_OK)
 
             except InvalidOSRMResponse:
                 return Response(

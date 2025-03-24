@@ -136,7 +136,7 @@ class AsyncOSRMRouteRepository(AsyncRouteRepositoryMixin):
         _origin = f"{origin.longitude},{origin.latitude}"
         _destination = f"{destination.longitude},{destination.latitude}"
         coordinates = f"{_origin};{_destination}"
-        url = f"{OSRM_URL}/{coordinates}?overview=full&geometries=polyline"
+        url = f"{OSRM_URL}/{coordinates}"
 
         log.debug(f"Making request to OSRM URL: {url}")
 
