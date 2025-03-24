@@ -14,7 +14,7 @@ import polyline
 
 from route_manager import settings
 
-from ._client import BaseAsyncClient, _AsyncClient
+from .client import BaseAsyncClient, _AsyncClient
 from .mixins import AsyncRouteRepositoryMixin, Location, RouteGeometry, RouteInformation
 
 OSRM_URL = getattr(
