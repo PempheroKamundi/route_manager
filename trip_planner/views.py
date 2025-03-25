@@ -12,8 +12,10 @@ from rest_framework.views import APIView
 
 from repository.async_.client import NetworkTimeOutError
 from repository.async_.mixins import Location
-from repository.async_.osrm_repository import InvalidOSRMResponse, NoOSRMRouteFound
-from routing.route_planner.standard_route_planner import USAStandardRoutePlanner
+from repository.async_.osrm_repository import (InvalidOSRMResponse,
+                                               NoOSRMRouteFound)
+from routing.route_planner.standard_route_planner import \
+    USAStandardRoutePlanner
 
 from .normalizer import FrontEndNormalizer
 from .serializers import TripSerializer, TruckerLogInputSerializer

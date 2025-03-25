@@ -5,11 +5,9 @@ import pytest
 
 from repository.async_.mixins import RouteGeometry
 from repository.async_.tests.factory import RouteGeometryFactory
-from routing.segment_planner.base_segment_planner import (
-    DutyStatus,
-    RouteSegment,
-    SegmentType,
-)
+from routing.segment_planner.base_segment_planner import (DutyStatus,
+                                                          RouteSegment,
+                                                          SegmentType)
 from routing.trip_summarizer import TripSummaryMixin
 
 

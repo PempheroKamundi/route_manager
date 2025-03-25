@@ -16,12 +16,8 @@ from typing import List, Tuple, Type
 from hos_rules.rules import HOSInterstateRule
 
 from ..driver_state import DriverState
-from .base_segment_planner import (
-    BaseAbstractTripSegmentPlanner,
-    DutyStatus,
-    RouteSegment,
-    SegmentType,
-)
+from .base_segment_planner import (BaseAbstractTripSegmentPlanner, DutyStatus,
+                                   RouteSegment, SegmentType)
 
 logger = logging.getLogger(__name__)
 

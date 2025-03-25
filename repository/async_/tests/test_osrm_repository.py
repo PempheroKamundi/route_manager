@@ -3,12 +3,9 @@ from unittest.mock import AsyncMock, patch
 import pytest
 
 from ..mixins import RouteInformation
-from ..osrm_repository import (
-    AsyncOSRMRouteRepository,
-    NoOSRMRouteFound,
-    _convert_osrm_to_route_information,
-    get_route_information,
-)
+from ..osrm_repository import (AsyncOSRMRouteRepository, NoOSRMRouteFound,
+                               _convert_osrm_to_route_information,
+                               get_route_information)
 from .factory import LocationFactory, MockResponseFactory
 
 

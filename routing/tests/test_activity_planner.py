@@ -5,11 +5,9 @@ import pytest
 
 from repository.async_.tests.factory import RouteInformationFactory
 from routing.activity_planner import USATripActivityPlannerMixin
-from routing.segment_planner.base_segment_planner import (
-    DutyStatus,
-    RouteSegmentsData,
-    SegmentType,
-)
+from routing.segment_planner.base_segment_planner import (DutyStatus,
+                                                          RouteSegmentsData,
+                                                          SegmentType)
 from routing.tests.factory import DriverStateFactory
 
 
