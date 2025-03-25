@@ -11,10 +11,12 @@ from typing import Type
 
 from hos_rules.rules import HOSInterstateRule
 from repository.async_.mixins import RouteInformation
-from routing.segment_planner.base_segment_planner import (DutyStatus,
-                                                          RouteSegment,
-                                                          RouteSegmentsData,
-                                                          SegmentType)
+from routing.segment_planner.base_segment_planner import (
+    DutyStatus,
+    RouteSegment,
+    RouteSegmentsData,
+    SegmentType,
+)
 
 from .driver_state import DriverState
 

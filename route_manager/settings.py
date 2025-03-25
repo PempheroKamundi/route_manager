@@ -10,8 +10,9 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
-from datetime import timedelta
 from pathlib import Path
+
+from decouple import Csv, config
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -21,12 +22,15 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = "django-insecure-(#37-0t(wdbvzf3^-#xiv6p2+2y8rr&ooexwx6r!-y=x7e(0pq"
+SECRET_KEY = config(
+    "SECRET_KEY",
+    default="django-insecure-(#37-0t(wdbvzf3^-#xiv6p2+2y8rr&ooexwx6r!-y=x7e(0pq",
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = False
+DEBUG = config("DEBUG", default=False, cast=bool)
 
-ALLOWED_HOSTS = ["*"]
+ALLOWED_HOSTS = config("ALLOWED_HOSTS", default="*", cast=Csv())
 
 
 # Application definition
@@ -38,27 +42,15 @@ INSTALLED_APPS = [
     "django.contrib.sessions",
     "django.contrib.messages",
     "django.contrib.staticfiles",
-    "rest_framework_simplejwt",
     "corsheaders",
 ]
 
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": [
-        "rest_framework_simplejwt.authentication.JWTAuthentication",
         "rest_framework.authentication.SessionAuthentication",
     ],
 }
 
-SIMPLE_JWT = {
-    "ACCESS_TOKEN_LIFETIME": timedelta(minutes=30),
-    "REFRESH_TOKEN_LIFETIME": timedelta(days=1),
-    "ROTATE_REFRESH_TOKENS": False,
-    "BLACKLIST_AFTER_ROTATION": True,
-    "ALGORITHM": "HS256",
-    "SIGNING_KEY": "d1eb5eb13e445a7f33d4749045520073ffdcab14efd0b2b606c615539104e0cd9cb38c2c842a5aedb174875364f7afe5b31c2a7b9caf0ad39db16382524f44144527063325138006f08ad03bc928796b10737eceffc0dbd58d863709fda5a300501f75b87576688636684166f0b9026c0686bf390b69b067ecc0303bb54bdf9cb5d9c43cc31a7c0112c70cf62a616bf0f0c3260a87a701100080de1c856a9834d7c63631777666d0f5d4fb3745ffd0556230ac253edd6af470a53855603183960ed5dbe15fe9dc776e7b99840131c5781925c9cd1135190a16a7afcc44c8983cbddeefc2dcfae0c23c209be5063b9254e5360538925b8f24377904e8aad98b05",
-    "VERIFYING_KEY": None,
-    "AUTH_HEADER_TYPES": ("Bearer",),
-}
 
 MIDDLEWARE = [
     "django.middleware.security.SecurityMiddleware",
@@ -72,8 +64,8 @@ MIDDLEWARE = [
 ]
 
 ROOT_URLCONF = "route_manager.urls"
-CORS_ALLOW_ALL_ORIGINS = True
-CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOW_ALL_ORIGINS = config("CORS_ALLOW_ALL_ORIGINS", default=True, cast=bool)
+CORS_ALLOW_CREDENTIALS = config("CORS_ALLOW_CREDENTIALS", default=True, cast=bool)
 
 
 TEMPLATES = [
@@ -119,7 +111,7 @@ LOGGING = {
         "file": {
             "level": "DEBUG" if DEBUG else "INFO",
             "class": "logging.FileHandler",
-            "filename": "virtu_educate.log",
+            "filename": config("LOG_FILE", default="virtu_educate.log"),
             "formatter": "verbose",
         },
     },
@@ -130,7 +122,7 @@ LOGGING = {
             "propagate": True,
         },
         "django.request": {
-            "handlers": ["console"],  # or ["file", "console"] if you want both
+            "handlers": ["console"],
             "level": "DEBUG" if DEBUG else "INFO",
             "propagate": True,
         },
@@ -141,10 +133,15 @@ LOGGING = {
 # Database
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
+# Default to SQLite
 DATABASES = {
     "default": {
-        "ENGINE": "django.db.backends.sqlite3",
-        "NAME": BASE_DIR / "db.sqlite3",
+        "ENGINE": config("DB_ENGINE", default="django.db.backends.sqlite3"),
+        "NAME": config("DB_NAME", default=str(BASE_DIR / "db.sqlite3")),
+        "USER": config("DB_USER", default=""),
+        "PASSWORD": config("DB_PASSWORD", default=""),
+        "HOST": config("DB_HOST", default=""),
+        "PORT": config("DB_PORT", default=""),
     }
 }
 
@@ -171,9 +168,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/5.1/topics/i18n/
 
-LANGUAGE_CODE = "en-us"
+LANGUAGE_CODE = config("LANGUAGE_CODE", default="en-us")
 
-TIME_ZONE = "UTC"
+TIME_ZONE = config("TIME_ZONE", default="UTC")
 
 USE_I18N = True
 
@@ -183,7 +180,8 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.1/howto/static-files/
 
-STATIC_URL = "static/"
+STATIC_URL = config("STATIC_URL", default="static/")
+STATIC_ROOT = config("STATIC_ROOT", default=str(BASE_DIR / "staticfiles"))
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
