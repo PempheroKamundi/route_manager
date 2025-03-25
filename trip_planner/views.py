@@ -190,7 +190,6 @@ class TruckerLogProcessView(APIView):
 
             result = TruckerLogService.process_trucker_logs(serializer.validated_data)
 
-            # Cache the result
             cache.set(cache_key, result, self.CACHE_TIMEOUT)
 
             return Response(
