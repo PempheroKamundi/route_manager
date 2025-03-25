@@ -1,7 +1,10 @@
 import asyncio
 import datetime
+import hashlib
+import json
 import logging
 
+from django.core.cache import cache
 from django.utils.decorators import method_decorator
 from django.views.decorators.csrf import csrf_exempt
 from rest_framework import status
@@ -12,10 +15,8 @@ from rest_framework.views import APIView
 
 from repository.async_.client import NetworkTimeOutError
 from repository.async_.mixins import Location
-from repository.async_.osrm_repository import (InvalidOSRMResponse,
-                                               NoOSRMRouteFound)
-from routing.route_planner.standard_route_planner import \
-    USAStandardRoutePlanner
+from repository.async_.osrm_repository import InvalidOSRMResponse, NoOSRMRouteFound
+from routing.route_planner.standard_route_planner import USAStandardRoutePlanner
 
 from .normalizer import FrontEndNormalizer
 from .serializers import TripSerializer, TruckerLogInputSerializer
@@ -51,19 +52,39 @@ def _get_user_start_time(start_time_str: str):
         return start_time
 
 
+def _generate_cache_key(data_dict):
+    """
+    Generate a cache key from request data
+    """
+    serialized = json.dumps(data_dict, sort_keys=True)
+    return f"trip_cache_{hashlib.md5(serialized.encode()).hexdigest()}"
+
+
 @method_decorator(csrf_exempt, name="dispatch")
 class TripView(APIView):
     parser_classes = [JSONParser]
     throttle_classes = [TripUserRateThrottle, TripAnonRateThrottle]
 
+    # Cache timeout in seconds (30 minutes)
+    CACHE_TIMEOUT = 60 * 30
+
     """
-    A simple view that processes trip data asynchronously with rate limiting
+    A simple view that processes trip data asynchronously with rate limiting and caching
     """
 
     def post(self, request):
         serializer = TripSerializer(data=request.data)
 
         if serializer.is_valid():
+            cache_key = _generate_cache_key(serializer.validated_data)
+
+            cached_response = cache.get(cache_key)
+            if cached_response:
+                logger.info(f"Cache hit for key: {cache_key}")
+                return Response(cached_response, status=status.HTTP_200_OK)
+
+            logger.info(f"Cache miss for key: {cache_key}")
+
             current_location = Location(
                 longitude=serializer.validated_data["current_location"]["longitude"],
                 latitude=serializer.validated_data["current_location"]["latitude"],
@@ -82,9 +103,6 @@ class TripView(APIView):
             current_cycle_used = serializer.validated_data["current_cycle_used"]
             start_time_str = serializer.validated_data["start_time"]
             timezone_offset = serializer.validated_data["timezone_offset_minutes"]
-
-            print(start_time_str, "start time")
-            print(timezone_offset, "timezone_offset")
 
             driver_timezone = datetime.timezone(
                 datetime.timedelta(minutes=timezone_offset)
@@ -114,6 +132,9 @@ class TripView(APIView):
                     route_planner.plan_route_trip(start_time)
                 )
                 normalized_data = FrontEndNormalizer(route_plan.to_dict()).normalize()
+
+                cache.set(cache_key, normalized_data, self.CACHE_TIMEOUT)
+
                 return Response(normalized_data, status=status.HTTP_200_OK)
 
             except InvalidOSRMResponse:
@@ -144,15 +165,34 @@ class TripView(APIView):
 class TruckerLogProcessView(APIView):
     throttle_classes = [TripUserRateThrottle, TripAnonRateThrottle]
 
+    # Cache timeout in seconds (30 minutes)
+    CACHE_TIMEOUT = 60 * 30
+
     """
-    API view for processing trucker logs.
+    API view for processing trucker logs with caching.
     """
 
     def post(self, request, *args, **kwargs):
         serializer = TruckerLogInputSerializer(data=request.data)
 
         if serializer.is_valid():
+            cache_key = _generate_cache_key(serializer.validated_data)
+
+            cached_response = cache.get(cache_key)
+            if cached_response:
+                logger.info(f"Cache hit for trucker log: {cache_key}")
+                return Response(
+                    {"status": "success", "data": cached_response, "cached": True},
+                    status=status.HTTP_200_OK,
+                )
+
+            logger.info(f"Cache miss for trucker log: {cache_key}")
+
             result = TruckerLogService.process_trucker_logs(serializer.validated_data)
+
+            # Cache the result
+            cache.set(cache_key, result, self.CACHE_TIMEOUT)
+
             return Response(
                 {"status": "success", "data": result}, status=status.HTTP_200_OK
             )
