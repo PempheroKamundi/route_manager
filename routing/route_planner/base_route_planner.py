@@ -17,8 +17,11 @@ from typing import Any, List
 
 from repository.async_.mixins import RouteInformation
 
-from ..segment_planner.base_segment_planner import (DriverState, RouteSegment,
-                                                    RouteSegmentsData)
+from ..segment_planner.base_segment_planner import (
+    DriverState,
+    RouteSegment,
+    RouteSegmentsData,
+)
 from ..trip_summarizer import RoutePlan
 
 RoutesInBetween = namedtuple(

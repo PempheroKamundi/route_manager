@@ -84,6 +84,7 @@ pytest-cov==6.0.0
 pytest-django==4.10.0
 pytest-factoryboy==2.7.0
 python-dateutil==2.9.0.post0
+python-decouple==3.8
 python-docx==1.1.2
 pytz==2025.1
 pyxnat==1.6.3
