@@ -20,13 +20,10 @@ from repository.async_.osrm_repository import get_route_information
 
 from ..activity_planner import USATripActivityPlannerMixin
 from ..segment_planner.base_segment_planner import (
-    BaseAbstractTripSegmentPlanner,
-    DriverState,
-    RouteSegment,
-    RouteSegmentsData,
-    SegmentType,
-)
-from ..segment_planner.usa_inter_segment_planner import USAInterTripSegmentPlanner
+    BaseAbstractTripSegmentPlanner, DriverState, RouteSegment,
+    RouteSegmentsData, SegmentType)
+from ..segment_planner.usa_inter_segment_planner import \
+    USAInterTripSegmentPlanner
 from ..trip_summarizer import RoutePlan, TripSummaryMixin
 from .base_route_planner import BaseAbstractRoutePlanner, RoutesInBetween
 
