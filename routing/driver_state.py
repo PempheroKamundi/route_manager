@@ -32,6 +32,7 @@ class DriverState:
     - 30-minute break requirement after 8 hours of driving
     - 10-hour off-duty break requirements
     - Vehicle refueling tracking
+    - 34-hour restart for resetting the 60/70-hour limits (8-day rule)
 
     Attributes:
         duty_hours_last_8_days: List of daily on-duty hours for the past 8 days
@@ -140,6 +141,31 @@ class DriverState:
         self.current_off_duty_hours = 0.0
         logger.debug("Reset on-duty window and driving counters")
 
+    def reset_duty_hours_after_34hr_reset(self) -> None:
+        """
+        Reset driver state after a 34-hour restart period.
+
+        After a 34-hour continuous off-duty period, the driver's 60/70-hour
+        8-day duty cycle is reset. This allows the driver to start fresh with
+        a full 60/70-hour allowance, regardless of how many hours were worked
+        in the previous 7/8 days.
+        """
+        logger.info("Applying 34-hour restart, resetting 8-day duty cycle")
+
+        # Reset the 8-day duty hour counters (all days set to zero)
+        self.duty_hours_last_8_days = [0.0] * 8
+
+        # Also reset the current day counters and on-duty window
+        self.current_on_duty_window_start = None
+        self.current_day_driving_hours = 0.0
+        self.current_day_on_duty_hours = 0.0
+        self.accumulative_driving_hours = 0.0
+        self.current_off_duty_hours = 0.0
+
+        logger.debug(
+            "Reset 8-day duty cycle and all driver counters after 34-hour restart"
+        )
+
     def check_day_change(self, current_time: datetime.datetime) -> None:
         """
         Check if the date has changed and update the state accordingly.
@@ -217,14 +243,20 @@ class DriverState:
         # 14-hour on-duty window limit (if window has started)
         on_duty_window_limit: float = float("inf")
         if self.current_on_duty_window_start is not None:
-            # Get current time with timezone information
-            now = datetime.datetime.now(datetime.timezone.utc)
-
-            # Ensure window start time has timezone information
+            # Get the driver's timezone from the start time
             start_time = self.current_on_duty_window_start
-            if start_time.tzinfo is None:
-                # If naive, assume it's UTC
-                start_time = start_time.replace(tzinfo=datetime.timezone.utc)
+            driver_timezone = start_time.tzinfo
+
+            # Make sure we have a timezone-aware start time
+            if driver_timezone is None:
+                logger.warning(
+                    "Start time had no timezone information, defaulting to UTC"
+                )
+                driver_timezone = datetime.timezone.utc
+                start_time = start_time.replace(tzinfo=driver_timezone)
+
+            # Get current time in driver's timezone
+            now = datetime.datetime.now(driver_timezone)
 
             elapsed: float = (now - start_time).total_seconds() / 3600
             on_duty_window_limit = max(0, 14.0 - elapsed)

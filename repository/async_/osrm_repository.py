@@ -15,7 +15,8 @@ import polyline
 from route_manager import settings
 
 from .client import BaseAsyncClient, _AsyncClient
-from .mixins import AsyncRouteRepositoryMixin, Location, RouteGeometry, RouteInformation
+from .mixins import (AsyncRouteRepositoryMixin, Location, RouteGeometry,
+                     RouteInformation)
 
 OSRM_URL = getattr(
     settings, "OSRM_URL", "http://router.project-osrm.org/route/v1/driving"

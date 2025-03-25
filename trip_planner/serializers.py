@@ -11,3 +11,11 @@ class TripSerializer(serializers.Serializer):
     pickup_location = LocationSerializer()
     drop_off_location = LocationSerializer()
     current_cycle_used = serializers.FloatField()
+    start_time = serializers.DateTimeField()
+    timezone_offset_minutes = serializers.IntegerField()
+
+
+class TruckerLogInputSerializer(serializers.Serializer):
+    """Serializer for validating the input data"""
+
+    route_data = serializers.ListField(required=True)

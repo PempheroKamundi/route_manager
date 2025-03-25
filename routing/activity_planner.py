@@ -11,12 +11,10 @@ from typing import Type
 
 from hos_rules.rules import HOSInterstateRule
 from repository.async_.mixins import RouteInformation
-from routing.segment_planner.base_segment_planner import (
-    DutyStatus,
-    RouteSegment,
-    RouteSegmentsData,
-    SegmentType,
-)
+from routing.segment_planner.base_segment_planner import (DutyStatus,
+                                                          RouteSegment,
+                                                          RouteSegmentsData,
+                                                          SegmentType)
 
 from .driver_state import DriverState
 
@@ -86,6 +84,8 @@ class USATripActivityPlannerMixin:
                 driver_state.current_on_duty_window_start,
             )
 
+        activity = "Pickup activity" if segment_type.PICKUP else "Drop off activity"
+
         segments.append(
             RouteSegment(
                 type=segment_type,
@@ -93,7 +93,7 @@ class USATripActivityPlannerMixin:
                 end_time=activity_end_time,
                 duration_hours=hos_rule.PICKUP_DROP_OFF_TIME.value,
                 distance_miles=0,
-                location="Activity",
+                location=activity,
                 status=DutyStatus.ON_DUTY_NOT_DRIVING,
             )
         )

@@ -4,7 +4,8 @@ import factory
 from factory import fuzzy
 
 from ..driver_state import DriverState
-from ..segment_planner.base_segment_planner import DutyStatus, RouteSegment, SegmentType
+from ..segment_planner.base_segment_planner import (DutyStatus, RouteSegment,
+                                                    SegmentType)
 
 
 class RouteSegmentFactory(factory.Factory):
