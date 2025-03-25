@@ -90,7 +90,7 @@ class TripSummaryMixin:
 
         # Additional analytics if needed
         # Can be useful for other metrics
-        driving_time = df[df["status"].str.contains("Driving")]["duration_hours"].sum()
+        driving_time = df[df["status"] == "On Duty (Driving)"]["duration_hours"].sum()
         rest_time = df[df["status"] == "Off Duty"]["duration_hours"].sum()
 
         # Combine route geometries for full trip visualization
